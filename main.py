@@ -5,7 +5,18 @@ import matplotlib as plt
 from matplotlib import pyplot
 import pandas as pd
 from pandas.plotting import scatter_matrix
-import sklearn
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
 
 class IrisFlowers():
     def __init__(self):
@@ -32,12 +43,33 @@ class IrisFlowers():
         scatter_matrix(dataset)
         pyplot.show()
 
+    def validation_data(self, dataset):
+        data = dataset.values
+        x = data[:, 0:4]
+        y = data[:, 4]
+        models = []
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, train_size=0.8, random_state=1)
+        models.append(("LR", LogisticRegression(solver="liblinear", multi_class="ovr")))
+        models.append(("LDA", LinearDiscriminantAnalysis()))
+        models.append(("KNN", KNeighborsClassifier()))
+        models.append(("CART", DecisionTreeClassifier()))
+        models.append(("NB", GaussianNB()))
+        models.append(("SVM", SVC(gamma="auto")))
+        for name, model in models:
+            kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=1)
+            cv_results = cross_val_score(model, X=x_train, y=y_train, cv=kfold, scoring="accuracy")
+            print("Accuracy for {} is {:.2f}% with standard deviation {}\n".format(
+                name, cv_results.mean().item() * 100, cv_results.std() * 100))
+
+
+
 
 if __name__ == '__main__':
     iris = IrisFlowers()
     iris_dataframe = iris.read_data()
     iris.observe_data(iris_dataframe)
-    iris.univariate_visualizations(iris_dataframe)
-    iris.multivariate_visualizations(iris_dataframe)
+    #iris.univariate_visualizations(iris_dataframe)
+    #iris.multivariate_visualizations(iris_dataframe)
+    iris.validation_data(iris_dataframe)
 
 
